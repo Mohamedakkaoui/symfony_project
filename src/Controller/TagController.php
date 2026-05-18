@@ -3,25 +3,23 @@
 namespace App\Controller;
 
 use App\DTO\Product\TagDTO;
-use App\Entity\Tag;
 use App\Repository\TagRepository;
 use App\Service\TagService;
-use App\Transformer\TagTransformer;
 use App\Utils\ValidationErrorFormatter;
-use Doctrine\ORM\EntityManagerInterface;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use \Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[Route('/tag', name: 'app_tag_')]
 class TagController extends AbstractController
 {
-    public function __construct(private TagService $tagService) {}
+    public function __construct(private readonly TagService $tagService) {}
 
     #[Route('/', name: 'index')]
-    public function index(TagRepository $tagRepository) : Response
+    public function index() : Response
     {
         $tags = $this->tagService->getTags();
         return $this->render('tag/index.html.twig',[
@@ -58,12 +56,12 @@ class TagController extends AbstractController
             $this->addFlash('error', $errors);
             return $this->redirectToRoute('app_tag_create');
         }
-        $tag = $this->tagService->createTag($dto);
+        $this->tagService->createTag($dto);
         return $this->redirectToRoute('app_tag_index');
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     #[Route('/update/{id}', name: 'update', methods: ['POST'])]
     public function update(Request $request, $id, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
@@ -76,7 +74,7 @@ class TagController extends AbstractController
             $this->addFlash('error', $errors);
             return $this->redirectToRoute('app_tag_edit', ['id' => $id]);
         }
-        $tag = $this->tagService->updateTag($id, $dto);
+        $this->tagService->updateTag($id, $dto);
         return $this->redirectToRoute('app_tag_index');
     }
 
@@ -85,7 +83,7 @@ class TagController extends AbstractController
     {
         try {
             $this->tagService->deleteTag($id);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->addFlash('error', $e->getMessage());
         }
         return $this->redirectToRoute('app_tag_index');

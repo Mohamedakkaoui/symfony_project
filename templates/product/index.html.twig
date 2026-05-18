@@ -38,7 +38,7 @@
                     </td>
                     <td>
                         {% for color in product.colors %}
-                            <span class="badge bg-danger">
+                            <span class="badge" style="background-color: {{ color.code }};color: white">
                         {{ color.name }}
                     </span>
                         {% else %}

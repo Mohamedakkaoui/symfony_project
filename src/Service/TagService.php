@@ -7,11 +7,11 @@ use App\Entity\Tag;
 use App\Repository\TagRepository;
 use App\Transformer\TagTransformer;
 use Doctrine\ORM\EntityManagerInterface;
-use phpDocumentor\Reflection\Types\Boolean;
+use Exception;
 
 class TagService
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager, private TagRepository $tagRepository)
+    public function __construct(private readonly EntityManagerInterface $entityManager, private readonly TagRepository $tagRepository)
     {}
 
     public function getTags(): array
@@ -31,14 +31,14 @@ class TagService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function deleteTag($tagId) : void
     {
 
         $tag = $this->tagRepository->find($tagId);
         if (!$tag) {
-            throw new \Exception("Tag not found");
+            throw new Exception("Tag not found");
         }
         $this->entityManager->remove($tag);
         $this->entityManager->flush();
@@ -46,13 +46,13 @@ class TagService
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function updateTag($id, TagDTO $tagDTO) : Tag
     {
         $tag = $this->tagRepository->find($id);
         if (!$tag) {
-            throw new \Exception("Tag not found");
+            throw new Exception("Tag not found");
         }
         $tag->setName($tagDTO->name);
         $this->entityManager->flush();

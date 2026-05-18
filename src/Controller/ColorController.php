@@ -2,13 +2,15 @@
 
 namespace App\Controller;
 
-use App\Entity\Color;
+use App\DTO\Color\createColorDTO;
+use App\DTO\Color\updateColorDTO;
 use App\Repository\ColorRepository;
-use App\Transformer\ColorTransformer;
+use App\Service\ColorService;
 use App\Utils\ValidationErrorFormatter;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
@@ -16,12 +18,12 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class ColorController extends AbstractController
 {
 
+    public function __construct(private readonly ColorService $colorService){}
+
     #[Route('/', name: 'index')]
-    public function index(ColorRepository $colorRepository)
+    public function index()
     {
-        $colors = $colorRepository->findAll();
-        $colorsTransformer = new ColorTransformer();
-        $colorsTransformed = $colorsTransformer->transformCollection($colors);
+        $colorsTransformed = $this->colorService->getColors();
         return $this->render('color/index.html.twig', [
             'colors' => $colorsTransformed
         ]);
@@ -37,16 +39,14 @@ class ColorController extends AbstractController
     public function store(Request $request, EntityManagerInterface $em, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
     {
         $data = $request->request->all();
-        $color = new Color();
-        $color->setName($data['name']);
-        $color->setCode($data['code']);
-        $violations = $validator->validate($color);
+        $dto = new createColorDTO($data);
+        $violations = $validator->validate($dto);
         $errors = $validationErrorFormatter->format($violations);
         if (count($errors) > 0) {
             $this->addFlash('error', $errors);
+            return $this->redirectToRoute('app_color_create');
         }
-        $em->persist($color);
-        $em->flush();
+        $this->colorService->createColor($dto);
         return $this->redirectToRoute('app_color_index');
     }
 
@@ -63,36 +63,36 @@ class ColorController extends AbstractController
     }
 
     #[Route('/update/{id}', name: 'update', methods: ['POST'])]
-    public function update(Request $request,EntityManagerInterface $em, ColorRepository $colorRepository, $id, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
+    public function update(Request $request, $id, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
     {
-        $color = $colorRepository->find($id);
-        if (!$color) {
+        $data = $request->request->all();
+        try {
+            $dto = new updateColorDTO($data);
+            $violations = $validator->validate($dto);
+            $errors = $validationErrorFormatter->format($violations);
+            if (count($errors) > 0) {
+                $this->addFlash('error', $errors);
+                return $this->redirectToRoute('app_color_update', ['id' => $id]);
+            }
+           $this->colorService->updateColor($dto, $id);
+        } catch (NotFoundHttpException $e) {
+            $this->addFlash('error', $e->getMessage());
+        } finally {
             return $this->redirectToRoute('app_color_index');
         }
-        $data = $request->request->all();
-        $color->setName($data['name']);
-        $color->setCode($data['code']);
-        $violations = $validator->validate($color);
-        $errors = $validationErrorFormatter->format($violations);
-        if (count($errors) > 0) {
-            $this->addFlash('error', $errors);
-        }
-        $em->persist($color);
-        $em->flush();
-        return $this->redirectToRoute('app_color_index');
     }
 
 
     #[Route('/delete/{id}', name: 'delete', methods: ['POST'])]
-    public function delete(ColorRepository $colorRepository, $id, EntityManagerInterface $em)
+    public function delete($id)
     {
-        $color = $colorRepository->find($id);
-        if (!$color) {
+        try {
+           $this->colorService->deleteColor($id);
+        } catch (NotFoundHttpException $e) {
+            $this->addFlash('error', $e->getMessage());
+        } finally {
             return $this->redirectToRoute('app_color_index');
         }
-        $em->remove($color);
-        $em->flush();
-        return $this->redirectToRoute('app_color_index');
     }
 
 }
