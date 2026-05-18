@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create Tag{% endblock %}
+
+{% block body %}
+
+    <div class="container" style="display: flex;flex-direction: column;align-items: center;justify-content: center;">
+        <h1>Edit Tag</h1>
+        {% set errorFlashes = app.flashes('error') %}
+        {% if errorFlashes is not empty %}
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    {% for error in errorFlashes %}
+                        {% for field, messages in error %}
+                            {% for message in messages %}
+                                <li><strong>{{ field }}</strong>: {{ message }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <form action="{{ path('app_tag_update', { id: tag.id }) }}" method="post" style="width: 500px;">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" name="name" id="name" class="form-control" value="{{ tag.name }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+{% endblock %}

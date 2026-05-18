@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello ColorController!{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Colors</h1>
+        <a href="{{ path('app_color_create') }}" class="btn btn-primary">Create Color</a>
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Code</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for color in colors %}
+                <tr>
+                    <td>{{ color.name | capitalize }}</td>
+                    <td>{{ color.code }}</td>
+                    <td>
+                        <a href="{{ path('app_color_edit', { id: color.id }) }}" class="btn btn-success">Edit</a>
+                        <form method="post"
+                              action="{{ path('app_color_delete', { id: color.id }) }}"
+                        >
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-danger">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
