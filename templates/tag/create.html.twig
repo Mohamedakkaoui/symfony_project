@@ -11,10 +11,8 @@
             <div class="alert alert-danger">
                 <ul class="mb-0">
                     {% for error in errorFlashes %}
-                        {% for field, messages in error %}
-                            {% for message in messages %}
+                        {% for field, message in error %}
                                 <li><strong>{{ field }}</strong>: {{ message }}</li>
-                            {% endfor %}
                         {% endfor %}
                     {% endfor %}
                 </ul>

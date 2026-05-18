@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\DTO\Product\TagDTO;
 use App\Entity\Tag;
 use App\Repository\TagRepository;
+use App\Service\TagService;
 use App\Transformer\TagTransformer;
 use App\Utils\ValidationErrorFormatter;
 use Doctrine\ORM\EntityManagerInterface;
@@ -16,6 +18,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[Route('/tag', name: 'app_tag_')]
 class TagController extends AbstractController
 {
+    public function __construct(private TagService $tagService) {}
     #[Route('/', name: 'index')]
     public function index(TagRepository $tagRepository) : Response
     {
@@ -46,19 +49,20 @@ class TagController extends AbstractController
     }
 
     #[Route('/store', name: 'store', methods: ['POST'])]
-    public function store(Request $request, EntityManagerInterface $em, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
+    public function store(Request $request, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
     {
         $data = $request->request->all();
-        $tag = new Tag();
-        $tag->setName($data['name']);
-        $violations = $validator->validate($tag);
-        $errors = $validationErrorFormatter->format($violations);
-        if (count($errors) > 0) {
+        $dto = new TagDTO($data);
+        $violations = $validator->validate($dto);
+        if (count($violations) > 0) {
+            $errors = [];
+            foreach ($violations as $violation) {
+                $errors[$violation->getPropertyPath()] = $violation->getMessage();
+            }
             $this->addFlash('error', $errors);
             return $this->redirectToRoute('app_tag_create');
         }
-        $em->persist($tag);
-        $em->flush();
+        $tag = $this->tagService->createTag($dto);
         return $this->redirectToRoute('app_tag_index');
     }
 
