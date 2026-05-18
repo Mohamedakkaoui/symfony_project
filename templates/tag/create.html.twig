@@ -11,8 +11,10 @@
             <div class="alert alert-danger">
                 <ul class="mb-0">
                     {% for error in errorFlashes %}
-                        {% for field, message in error %}
+                        {% for field, messages in error %}
+                            {% for message in messages %}
                                 <li><strong>{{ field }}</strong>: {{ message }}</li>
+                            {% endfor %}
                         {% endfor %}
                     {% endfor %}
                 </ul>
@@ -23,7 +25,7 @@
                 <label for="name">Name</label>
                 <input type="text" name="name" id="name" class="form-control">
             </div>
-            <button type="submit" class="btn btn-primary">Create</button>
+            <button type="submit" class="btn btn-primary mt-4">Create</button>
         </form>
     </div>
 {% endblock %}

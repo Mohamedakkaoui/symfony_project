@@ -19,14 +19,13 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class TagController extends AbstractController
 {
     public function __construct(private TagService $tagService) {}
+
     #[Route('/', name: 'index')]
     public function index(TagRepository $tagRepository) : Response
     {
-        $tags = $tagRepository->findAll();
-        $tagsTransformer = new TagTransformer();
-        $tagsTransformed = $tagsTransformer->transformCollection($tags);
+        $tags = $this->tagService->getTags();
         return $this->render('tag/index.html.twig',[
-            'tags' => $tagsTransformed
+            'tags' => $tags
         ]);
     }
 
@@ -54,11 +53,8 @@ class TagController extends AbstractController
         $data = $request->request->all();
         $dto = new TagDTO($data);
         $violations = $validator->validate($dto);
-        if (count($violations) > 0) {
-            $errors = [];
-            foreach ($violations as $violation) {
-                $errors[$violation->getPropertyPath()] = $violation->getMessage();
-            }
+        $errors = $validationErrorFormatter->format($violations);
+        if (count($errors) > 0) {
             $this->addFlash('error', $errors);
             return $this->redirectToRoute('app_tag_create');
         }
@@ -66,27 +62,26 @@ class TagController extends AbstractController
         return $this->redirectToRoute('app_tag_index');
     }
 
+    /**
+     * @throws \Exception
+     */
     #[Route('/update/{id}', name: 'update', methods: ['POST'])]
-    public function update(Request $request, $id,TagRepository $tagRepository, EntityManagerInterface $em, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
+    public function update(Request $request, $id, ValidatorInterface $validator, ValidationErrorFormatter $validationErrorFormatter)
     {
-        $tag = $tagRepository->find($id);
-        if (!$tag) {
-            return $this->redirectToRoute('app_tag_index');
-        }
         $data = $request->request->all();
-        $tag->setName($data['name']);
-        $violations = $validator->validate($tag);
+        $dto = new TagDTO($data);
+        $violations = $validator->validate($dto);
         $errors = $validationErrorFormatter->format($violations);
         if (count($errors) > 0) {
             $this->addFlash('error', $errors);
+            return $this->redirectToRoute('app_tag_edit', ['id' => $id]);
         }
-        $em->persist($tag);
-        $em->flush();
+        $tag = $this->tagService->updateTag($id, $dto);
         return $this->redirectToRoute('app_tag_index');
     }
 
     #[Route('/delete/{id}', name: 'delete', methods: ['DELETE', 'POST'])]
-    public function delete($id, TagRepository $tagRepository, EntityManagerInterface $em)
+    public function delete($id)
     {
         try {
             $this->tagService->deleteTag($id);

@@ -18,7 +18,6 @@ final class ValidationErrorFormatter
             $path = $violation->getPropertyPath() ?: 'global';
             $errors[$path][] = (string) $violation->getMessage();
         }
-
         return $errors;
     }
 }
