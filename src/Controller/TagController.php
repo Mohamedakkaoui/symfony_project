@@ -88,12 +88,11 @@ class TagController extends AbstractController
     #[Route('/delete/{id}', name: 'delete', methods: ['DELETE', 'POST'])]
     public function delete($id, TagRepository $tagRepository, EntityManagerInterface $em)
     {
-        $tag = $tagRepository->find($id);
-        if (!$tag) {
-            return $this->redirectToRoute('app_tag_index');
+        try {
+            $this->tagService->deleteTag($id);
+        } catch (\Exception $e) {
+            $this->addFlash('error', $e->getMessage());
         }
-        $em->remove($tag);
-        $em->flush();
         return $this->redirectToRoute('app_tag_index');
     }
 

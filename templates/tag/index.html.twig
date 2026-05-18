@@ -6,6 +6,16 @@
     <div class="container">
         <h1>Tags</h1>
         <a href="{{ path('app_tag_create') }}" class="btn btn-primary">Create Tag</a>
+        {% set errorFlashes = app.flashes('error') %}
+        {% if errorFlashes is not empty %}
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    {% for error in errorFlashes %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
         <table class="table">
             <thead>
             <tr>
